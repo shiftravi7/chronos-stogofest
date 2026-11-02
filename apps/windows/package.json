@@ -1,0 +1,60 @@
+{
+  "name": "chronos-windows",
+  "productName": "CHRONOS",
+  "version": "2.0.0",
+  "private": true,
+  "description": "CHRONOS for Windows: background screen-time tracker with the CHRONOS dashboard and Assistant",
+  "author": "CHRONOS Team, STOGO FEST",
+  "main": "main.js",
+  "scripts": {
+    "start": "node ../../scripts/copy-web.js && electron .",
+    "dist": "node ../../scripts/copy-web.js && electron-builder --win nsis --x64"
+  },
+  "dependencies": {
+    "active-win": "8.2.1"
+  },
+  "devDependencies": {
+    "electron": "38.4.0",
+    "electron-builder": "26.0.12"
+  },
+  "build": {
+    "appId": "com.stogofest.chronos",
+    "productName": "CHRONOS",
+    "copyright": "CHRONOS Team · STOGO FEST",
+    "files": [
+      "main.js",
+      "preload.js",
+      "tracker.js",
+      "web/**/*",
+      "build/icon.png",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/active-win/**/*"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png",
+      "artifactName": "CHRONOS-Setup.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "CHRONOS",
+      "runAfterFinish": true
+    },
+    "npmRebuild": false,
+    "nodeGypRebuild": false
+  },
+  "allowScripts": {
+    "electron@38.4.0": true,
+    "electron-winstaller@5.4.0": true
+  }
+}

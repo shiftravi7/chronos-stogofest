@@ -1,0 +1,7 @@
+{
+  "appId": "com.stogofest.chronos",
+  "appName": "CHRONOS",
+  "webDir": "www",
+  "android": { "minWebViewVersion": 80 },
+  "server": { "androidScheme": "https" }
+}

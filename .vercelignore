@@ -1,0 +1,9 @@
+# Not needed on the website — keeps the deployment small and tidy
+apps/
+scripts/
+docs/
+server.js
+*.md
+.env
+.env.*
+!.env.example
