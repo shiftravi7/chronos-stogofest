@@ -505,7 +505,7 @@ async function threeIntro(finish, reveal, chrome, Tick) {
   // 4 · The Hands (5.2–6.8)
   tl.addLabel('scene4', 5.2)
     .to(movement.position, { z: -0.6, duration: 0.9, ease: 'power2.inOut' }, 5.2)
-    .to(movement.scale, { x: 0.6, y: 0.6, z: 0.6, duration: 0.9, ease: 'power2.inOut' }, 5.2)   // the movement settles inside the case, nothing sticks out past the dial
+    .to(movement.scale, { x: 0.52, y: 0.52, z: 0.52, duration: 0.9, ease: 'power2.inOut' }, 5.2)   // the movement settles inside the case, nothing sticks out past the dial
     .to(discMat, { opacity: 0.86, duration: 0.9, ease: 'sine.inOut' }, 5.25)
     .to(engraveMat, { opacity: 1, duration: 1.0, ease: 'sine.inOut' }, 5.4)
     .to(ringMat, { opacity: 1, duration: 0.8 }, 5.3)

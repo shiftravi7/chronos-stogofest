@@ -1,5 +1,5 @@
 /* CHRONOS · service worker — offline app shell. The Assistant (/api/) is never cached. */
-const CACHE = 'chronos-v2.0.2';
+const CACHE = 'chronos-v2.0.3';
 const SHELL = [
   './', 'index.html', 'manifest.json', 'downloads.config.js',
   'css/upgrade.css', 'fonts/fonts.css',
@@ -32,8 +32,7 @@ self.addEventListener('fetch', e => {
       .catch(() => caches.match('index.html')));
     return;
   }
-  e.respondWith(caches.match(req).then(hit => {
-    const net = fetch(req).then(r => { if (r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put(req, copy)); } return r; }).catch(() => hit);
-    return hit || net;
-  }));
+  // Network first so visitors always get the newest version; the cache is only for offline use.
+  e.respondWith(fetch(req).then(r => { if (r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put(req, copy)); } return r; })
+    .catch(() => caches.match(req)));
 });

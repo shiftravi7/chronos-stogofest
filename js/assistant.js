@@ -97,6 +97,31 @@
     return RESTING[i];
   }
 
+  // Offline answers: built from the shared scoring file, picked by what the question is about.
+  let restShown = false;
+  function localAnswer(q) {
+    const s = settings(), L = s.limits, N = s.lateNight, d = currentData();
+    const t = CS.normalizeDay(d.today), r = CS.scoreDay(t, s), H = CS.fmtH;
+    const week = (d.week || []).map(CS.normalizeDay).filter(x => CS.totalOf(x) > 0);
+    const has = re => re.test(q.toLowerCase());
+    const tipList = k => CS.TIPS[k].map((x, i) => `${i + 1}. ${x}`).join('\n');
+    if (has(/\b(hi|hello|hey|thanks|thank you)\b/)) return `Happy to help! Today you are at ${r.score}/100 (${r.label}). Ask me about late nights, gaming, videos, study or your week.`;
+    if (has(/week|7 days|seven|trend/)) {
+      if (week.length < 2) return 'I only have one day so far. Log a few more days and I can show you how your week is going.';
+      const avg = Math.round(week.reduce((a, x) => a + CS.scoreDay(x, s).score, 0) / week.length);
+      const best = week.reduce((a, x) => CS.scoreDay(x, s).score > CS.scoreDay(a, s).score ? x : a);
+      const lateDays = week.filter(x => x.late > L.late).length;
+      return `Across ${week.length} days your average score is ${avg} (${CS.labelFor(avg).name}).\nYour best day scored ${CS.scoreDay(best, s).score}.\n${lateDays ? `Late-night use went past ${H(L.late)} on ${lateDays} day${lateDays > 1 ? 's' : ''}. That is the easiest thing to improve.` : 'You kept late nights under control every day. Great habit!'}`;
+    }
+    if (has(/sleep|bed|night|late|wind|tired|1 ?am|midnight/)) return `You had ${H(t.late)} of screen time between ${N.start} and ${N.end} today (guideline: ${H(L.late)}).\nA simple wind-down plan:\n1. 30 minutes before ${N.start}, put your phone on charge outside your room.\n2. Swap screens for a book, music or tomorrow's to-do list.\n3. Keep the same bedtime on weekends so your body clock stays steady.`;
+    if (has(/game|gaming|play|valorant|minecraft|bgmi|roblox/)) return `Gaming today: ${H(t.gaming)} (guideline ${H(L.gaming)}). ${t.gaming > L.gaming ? `That is ${H(t.gaming - L.gaming)} over.` : 'You are inside the guideline. Nice!'}\n${tipList('gaming')}`;
+    if (has(/youtube|video|social|instagram|reel|netflix|entertain|scroll/)) return `Entertainment today: ${H(t.entertainment)} (guideline ${H(L.entertainment)}). ${t.entertainment > L.entertainment ? `That is ${H(t.entertainment - L.entertainment)} over.` : 'Well balanced!'}\n${tipList('entertainment')}`;
+    if (has(/study|homework|learn|exam|school/)) return `You studied ${H(t.study)} on screens today. Study time is never counted against you, it adds up to 5 bonus points.\nTip: study in 25-minute blocks with 5-minute screen-free breaks, and keep your phone in another room.`;
+    if (has(/sad|anxious|stress|addict|depress|can't stop|cannot stop|worried|health|eyes|headache/)) return 'That sounds hard, and it is good that you noticed it. Please talk to a parent, teacher or doctor about how you feel. I can help with small screen-time steps, but they can really support you.';
+    if (has(/score|how am i|doing|problem|worst|biggest|improve|tips?|advice|help/)) return `Your score today is ${r.score}/100: ${r.label}.\n${r.biggest ? 'Biggest thing to work on: ' + r.biggest : 'No guideline was crossed today. Nice work.'}\n${tipList(r.biggestKey || 'none')}`;
+    return `Here is what I see: ${H(CS.totalOf(t))} of screen time today, score ${r.score}/100 (${r.label}). Try asking me about your late nights, gaming, videos, study time or your week.`;
+  }
+
   const wait = ms => new Promise(r => setTimeout(r, ms));
   async function callAssistant(question) {
     const body = JSON.stringify({ question, data: currentData(), settings: settings(), history: history.slice(-8) });
@@ -129,7 +154,9 @@
       if (shown) history.push({ role: 'user', text: shown });
       history.push({ role: 'assistant', text: reply });
     } else {
-      bubble('bot', `<p>${esc(restingLine())}</p>${offlineCard()}`, 'resting');
+      // First time: the friendly line + quick read. After that, answer each question from the numbers.
+      if (!restShown) { restShown = true; bubble('bot', `<p>${esc(restingLine())}</p>${offlineCard()}`, 'resting'); }
+      else bubble('bot', render(localAnswer(shown || '')));
     }
     busy = false; form.classList.remove('busy');
   }
