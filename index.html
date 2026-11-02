@@ -1457,7 +1457,7 @@ html.overture-on body { overflow: hidden; }
           <article class="panel ledger-card log-panel reveal foil-edge" data-tilt="1.2" aria-labelledby="t-log">
             <div class="log-intro">
               <h3 class="h-sub" id="t-log">Daily Log</h3>
-              <p class="sub">Move the sliders and the dial updates instantly.</p>
+              <p class="sub" id="logIntroNote">Move the sliders and the dial updates instantly.</p>
             </div>
           <form class="ledger-form" id="ledgerForm" novalidate>
             <div class="log-sliders">
@@ -3024,14 +3024,14 @@ html.overture-on body { overflow: hidden; }
     preview();
   }
 
-  function preview() {
-    const v = readForm(), t = total(v);
+  function preview(deviceDay = null) {
+    const v = deviceDay ? CS.normalizeDay(deviceDay) : readForm(), t = total(v);
     Object.keys(sliders).forEach(f => { setOut(outs[f], v[f]); sliders[f].style.setProperty('--p', (v[f] / 12 * 100) + '%'); sliders[f].setAttribute('aria-valuetext', `${v[f]} hours`); });
     setOut($('#outTotal'), t);
     // Dial arcs
     const arc = (id, hrs) => { const el = $(id); el.setAttribute('stroke-dasharray', `${Math.min(hrs, 23.9)} 24`); el.classList.toggle('zero', hrs <= 0); };
     arc('#logStudy', v.study);
-    arc('#logDiv', v.gaming + v.entertainment);
+    arc('#logDiv', v.gaming + v.entertainment + v.other);
     arc('#logNoct', Math.min(v.late, LIM().late));
     arc('#logNoctHz', Math.max(0, v.late - LIM().late));
     if (+sliders.late.value > v.late) { sliders.late.value = v.late; sliders.late.style.setProperty('--p', (v.late / 12 * 100) + '%'); setOut(outs.late, v.late); }
@@ -3102,7 +3102,7 @@ html.overture-on body { overflow: hidden; }
   $('#gReset').addEventListener('click', () => { S.settings = CS.mergeSettings(); save(); paintGuides(); preview(); refreshRegistre(); window.dispatchEvent(new CustomEvent('chronos:settings-changed', { detail: S.settings })); toast('Guidelines', 'Restored the default guidelines.'); });
   paintGuides();
 
-  Object.values(sliders).forEach(s => s.addEventListener('input', () => { if (window.gsap) gsap.killTweensOf(s, '--p'); preview(); }));
+  Object.values(sliders).forEach(s => s.addEventListener('input', () => { if (window.gsap) gsap.killTweensOf(s, '--p'); $('#logIntroNote').textContent = 'Move the sliders and the dial updates instantly.'; preview(); }));
   inDate.max = dayKey();
   inDate.value = dayKey();
   inDate.addEventListener('change', () => { if (inDate.value) loadDay(inDate.value); });
@@ -4233,6 +4233,16 @@ html.overture-on body { overflow: hidden; }
     logDay(k, entry) {
       S.ledger[k] = { ...CS.normalizeDay(entry), ...(S.ledger[k] && S.ledger[k].bed ? { bed: S.ledger[k].bed, wake: S.ledger[k].wake } : {}), source: entry.source || 'manual', ts: Date.now() };
       save(); if (inDate.value === k) loadDay(k); refreshRegistre(); checkBadges(true);
+    },
+    previewDeviceDay(day) {
+      if (inDate.value !== dayKey()) return;
+      const live = CS.normalizeDay(day);
+      sliders.study.value = Math.min(12, live.study);
+      sliders.gaming.value = Math.min(12, live.gaming);
+      sliders.entertainment.value = Math.min(12, live.entertainment);
+      sliders.late.value = Math.min(12, live.late);
+      $('#logIntroNote').textContent = 'Showing measured screen time from this device · updates automatically.';
+      preview(live);
     },
     // Today plus the last 7 days from the manual log, in the shared day shape.
     manualData() {

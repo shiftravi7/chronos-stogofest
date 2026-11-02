@@ -175,6 +175,7 @@
       if (!ok) { showWelcome(); return; }
       cache[7] = await src.load(7);
       cache[1] = { days: cache[7].days.slice(-1) };
+      if (window.ChronosApp && cache[1].days[0]) window.ChronosApp.previewDeviceDay(totals(cache[1].days[0].apps));
       paint();
     } catch (e) {
       $('.dev-updated', section).textContent = 'Could not refresh just now';
