@@ -12,7 +12,8 @@ node_modules/
 # Build output
 dist/
 release/
-build/
+/build/
+!vendor/three/build/
 .vercel/
 apps/android/www/
 apps/android/android/app/build/
