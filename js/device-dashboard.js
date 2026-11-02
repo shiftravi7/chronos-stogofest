@@ -68,6 +68,7 @@
       <p>Android keeps app-usage data private. To read it, CHRONOS needs <b>Usage Access</b>. This is the same data <b>Digital Wellbeing</b> shows. It stays on your phone: only daily totals are sent to the Assistant, and only when you ask it something.</p>
       <ol><li>Tap <b>Open Usage Access</b> below.</li><li>Find <b>CHRONOS</b> in the list and tap it.</li><li>Turn on <b>Permit usage access</b>, then come back.</li></ol>
       <button class="btn btn-primary dev-grant" type="button">Open Usage Access</button>
+      <button class="dev-guide-link" type="button" data-guide>Allow Permission Guide</button>
       <p class="dev-small">CHRONOS never reads anything before you allow it, and you can turn it off at any time in the same screen.</p>
     </div>
     <div class="dev-body" hidden>
@@ -180,6 +181,76 @@
     } finally { loading = false; }
   }
 
+  /* ---------- Allow Permission Guide: step-by-step Usage Access per phone brand ---------- */
+  // Menu names differ a little between software versions; every brand ends with the same search tip.
+  const RESTRICTED = 'If the switch is grey or says “Restricted setting”: open Settings → Apps → CHRONOS → tap ⋮ (top-right) → <b>Allow restricted settings</b>, confirm, then try again. Android 13+ does this for apps installed from a file.';
+  const BRANDS = [
+    { id: 'oppo', name: 'Oppo, Realme & OnePlus', note: 'ColorOS · Realme UI · OxygenOS', match: /oppo|realme|oneplus|\bCPH\d|\bRMX\d|\bPH[A-Z]\d|\bPJ[A-Z]\d/i, steps: [
+      'Open <b>Settings</b>.',
+      'Tap <b>Privacy</b> (on some versions: <b>Privacy protection</b> or <b>Security &amp; privacy</b>).',
+      'Tap <b>Special permissions</b> (or <b>Special app access</b>).',
+      'Tap <b>Usage access</b> (or <b>Apps with usage access</b>).',
+      'Tap <b>CHRONOS</b> and turn on <b>Allow usage access</b>.',
+      'Keep it tracking: Settings → <b>Battery</b> → <b>More settings</b> → <b>Optimise battery use</b> (or App battery management) → CHRONOS → <b>Don’t optimise</b> / <b>Allow background activity</b>.'] },
+    { id: 'xiaomi', name: 'Xiaomi, Redmi & Poco', note: 'HyperOS · MIUI', match: /xiaomi|redmi|poco|\bM\d{4}[A-Z]\d|\b2\d{3}[A-Z0-9]{5,}/i, steps: [
+      'Open <b>Settings</b>.',
+      'Tap <b>Privacy protection</b> (HyperOS) or <b>Apps</b> → <b>Manage apps</b> (MIUI).',
+      'Tap <b>Special permissions</b>.',
+      'Tap <b>Usage access</b> (or <b>Apps with usage access</b>).',
+      'Tap <b>CHRONOS</b> and turn on <b>Permit usage access</b>.',
+      'Keep it tracking: Settings → <b>Apps</b> → CHRONOS → <b>Battery saver</b> → <b>No restrictions</b>, and turn on <b>Autostart</b>.'] },
+    { id: 'samsung', name: 'Samsung', note: 'One UI', match: /samsung|\bSM-[A-Z]\d/i, steps: [
+      'Open <b>Settings</b> → <b>Apps</b>.',
+      'Tap <b>⋮</b> (three dots, top-right) → <b>Special access</b>.',
+      'Tap <b>Usage data access</b>.',
+      'Find <b>CHRONOS</b> and switch it <b>On</b>.',
+      'Keep it tracking: Settings → <b>Apps</b> → CHRONOS → <b>Battery</b> → <b>Unrestricted</b>.'] },
+    { id: 'vivo', name: 'Vivo & iQOO', note: 'Funtouch OS · OriginOS', match: /vivo|iqoo|\bV2\d{3}|\bI2\d{3}/i, steps: [
+      'Open <b>Settings</b>.',
+      'Tap <b>Apps &amp; permissions</b> (or <b>Security &amp; privacy</b>).',
+      'Tap <b>Special access permissions</b> (or <b>More settings</b> → Special access).',
+      'Tap <b>Usage access</b>.',
+      'Tap <b>CHRONOS</b> and turn on <b>Permit usage access</b>.',
+      'Keep it tracking: Settings → <b>Battery</b> → <b>Background power consumption management</b> → CHRONOS → <b>Allow</b>.'] },
+    { id: 'pixel', name: 'Google Pixel, Motorola, Nokia & others', note: 'Android (stock)', match: /pixel|moto|motorola|nokia|nothing|lenovo|infinix|tecno|itel|lava/i, steps: [
+      'Open <b>Settings</b> → <b>Apps</b>.',
+      'Tap <b>Special app access</b> (on older phones: Apps → <b>Advanced</b> → Special app access).',
+      'Tap <b>Usage access</b>.',
+      'Tap <b>CHRONOS</b> and turn on <b>Permit usage access</b>.'] },
+    { id: 'huawei', name: 'Huawei & Honor', note: 'EMUI · MagicOS', match: /huawei|honor|\b[A-Z]{3}-(L|AL|LX|NX)\d/i, steps: [
+      'Open <b>Settings</b> → <b>Security</b> (or <b>Privacy</b>).',
+      'Tap <b>More settings</b>.',
+      'Tap <b>Apps with usage access</b> (or <b>Usage data access</b>).',
+      'Tap <b>CHRONOS</b> and turn on <b>Allow</b>.',
+      'Keep it tracking: Settings → <b>Battery</b> → <b>App launch</b> → CHRONOS → <b>Manage manually</b> and allow all three.'] }
+  ];
+  function openGuide() {
+    if ($('.dev-guide')) return;
+    const ua = navigator.userAgent || '';
+    const mine = BRANDS.find(b => b.match.test(ua));
+    const g = document.createElement('div');
+    g.className = 'dev-guide'; g.setAttribute('role', 'dialog'); g.setAttribute('aria-modal', 'true'); g.setAttribute('aria-labelledby', 'guideTitle');
+    g.innerHTML = `<div class="dev-guide-card">
+      <header class="dev-guide-head"><div><span class="label">Allow Permission Guide</span><h2 id="guideTitle">Turn on Usage Access</h2></div>
+        <button class="dev-guide-close" type="button" aria-label="Close the guide">×</button></header>
+      <p class="dev-small">Pick your phone brand. Some brands (like Oppo and Realme) hide this setting, so follow the steps below.${mine ? ` We think your phone is <b>${esc(mine.name)}</b>, so it is open already.` : ''}</p>
+      <div class="dev-guide-list">${BRANDS.map(b => `<details class="dev-brand"${mine === b ? ' open' : ''}>
+        <summary><span>${b.name}</span><em>${b.note}</em></summary>
+        <ol>${b.steps.map(s => `<li>${s}</li>`).join('')}</ol>
+        <p class="dev-tip">${RESTRICTED}</p></details>`).join('')}</div>
+      <p class="dev-small">Still can’t find it? Open <b>Settings</b>, tap the search bar and type <b>usage access</b>.</p>
+      <div class="btn-row"><button class="btn btn-primary" type="button" data-open-settings>Open Usage Access now</button><button class="btn" type="button" data-close>Done</button></div>
+    </div>`;
+    document.body.appendChild(g);
+    const close = () => g.remove();
+    $('.dev-guide-close', g).addEventListener('click', close);
+    $('[data-close]', g).addEventListener('click', close);
+    g.addEventListener('click', e => { if (e.target === g) close(); });
+    g.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    $('[data-open-settings]', g).addEventListener('click', async () => { close(); await src.openSettings(); });
+    $('.dev-guide-close', g).focus();
+  }
+
   /* ---------- First launch: friendly permission explainer (Android) ---------- */
   function showWelcome() {
     if (!isAndroid) return;
@@ -193,17 +264,20 @@
       <p>CHRONOS can measure your screen time for you, so you don’t have to type it in. To do that, Android asks you to allow <b>Usage Access</b> — the same data <b>Digital Wellbeing</b> shows.</p>
       <ul><li>Your data stays on this phone.</li><li>CHRONOS reads nothing until you allow it.</li><li>You can switch it off any time.</li></ul>
       <div class="btn-row"><button class="btn btn-primary" type="button" data-go>Allow Usage Access</button><button class="btn" type="button" data-later>Not now</button></div>
+      <button class="dev-guide-link" type="button" data-guide>Allow Permission Guide</button>
     </div>`;
     document.body.appendChild(w);
     const done = () => { try { localStorage.setItem('chronos.welcomeSeen', '1'); } catch (e) {} w.remove(); };
     $('[data-go]', w).addEventListener('click', async () => { done(); await src.openSettings(); });
     $('[data-later]', w).addEventListener('click', done);
+    $('[data-guide]', w).addEventListener('click', openGuide);
   }
 
   section.addEventListener('click', async e => {
     const tab = e.target.closest('[data-range]');
     if (tab) { range = +tab.dataset.range; section.querySelectorAll('[data-range]').forEach(b => b.setAttribute('aria-selected', String(b === tab))); paint(); return; }
     if (e.target.closest('.dev-grant')) { await src.openSettings(); return; }
+    if (e.target.closest('[data-guide]')) { openGuide(); return; }
     if (e.target.closest('.dev-refresh')) { refresh(); return; }
     if (e.target.closest('.dev-ask')) { if (window.ChronosAssistant) window.ChronosAssistant.ask(range === 7 ? 'How was my week on this device?' : 'How is my screen time today on this device?'); return; }
     if (e.target.closest('.dev-log') && cache[1] && window.ChronosApp) {
