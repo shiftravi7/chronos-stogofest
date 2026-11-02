@@ -108,6 +108,7 @@
         const timer = setTimeout(() => ctrl.abort(), 35000);
         const r = await fetch(endpoint(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: ctrl.signal });
         clearTimeout(timer);
+        if (r.status === 404 || r.status === 405) return null;   // static hosting (e.g. GitHub Pages): no server, use the offline read
         const j = await r.json().catch(() => null);
         if (j && j.ok && j.reply) return j.reply;
         if (j && j.retry === false) return null;   // not available right now: go straight to the offline read

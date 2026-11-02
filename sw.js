@@ -1,5 +1,5 @@
 /* CHRONOS · service worker — offline app shell. The Assistant (/api/) is never cached. */
-const CACHE = 'chronos-v2.0.0';
+const CACHE = 'chronos-v2.0.1';
 const SHELL = [
   './', 'index.html', 'manifest.json', 'downloads.config.js',
   'css/upgrade.css', 'fonts/fonts.css',

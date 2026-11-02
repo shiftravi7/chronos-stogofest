@@ -19,7 +19,8 @@ const ALLOWED = new Set([
   'https://chronos-stogofest.vercel.app',
   'https://localhost',          // Android app (Capacitor)
   'capacitor://localhost',      // iOS shell, if ever built
-  'app://chronos'               // Windows app (Electron)
+  'app://chronos',              // Windows app (Electron)
+  'https://shiftravi7.github.io' // GitHub Pages copy of the site
 ]);
 const ALLOWED_PATTERNS = [
   /^https:\/\/chronos-stogofest(-[a-z0-9-]+)*\.vercel\.app$/, // Vercel preview deployments of this project
